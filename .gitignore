@@ -1,0 +1,5 @@
+*.log
+*.idea
+_pyache_
+*.csv
+*.pyc
