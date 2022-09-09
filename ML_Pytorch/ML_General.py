@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import datetime
 import torch.torch_version
-import DataLoadAndPreprocessing
 import torch.nn as nn
 import warnings
 
@@ -179,7 +178,6 @@ class ML_General():
 
 if __name__ == '__main__':
 
-    # DataLoadAndPreprocessing.create_cretio_data(embed_dim=10, test_size=0.2, val_size=0.2, path="./data")
     models = ['WideDeep', 'DeepFM', 'NFM', 'DCN']
     for model in models:
         ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=64, dnn_dropout=0.9, embedding_dim=10,
@@ -195,3 +193,4 @@ if __name__ == '__main__':
 
     # ml.model.load_state_dict(torch.load("D:/DataSet/model_parameter.pkl"))
     # ml.model.forward(input)  # 进行使用
+    # DataLoadAndPreprocessing.create_cretio_data(embed_dim=10, test_size=0.2, val_size=0.2, path="./data")
