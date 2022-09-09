@@ -31,7 +31,7 @@ class Dnn(nn.Module):
         return x
 
 class NFM(nn.Module):
-    def __init__(self, feature_columns, hidden_units, dnn_dropout=0.):
+    def __init__(self, feature_columns, hidden_units, dropout=0.):
         """
         NFM:
         :param feature_columns: 特征信息， 这个传入的是fea_cols
@@ -51,7 +51,7 @@ class NFM(nn.Module):
         hidden_units.insert(0, self.fea_num)
         
         self.bn = nn.BatchNorm1d(self.fea_num)     
-        self.dnn_network = Dnn(hidden_units, dnn_dropout)
+        self.dnn_network = Dnn(hidden_units, dropout)
         self.nn_final_linear = nn.Linear(hidden_units[-1], 1)
     
     def forward(self, x):

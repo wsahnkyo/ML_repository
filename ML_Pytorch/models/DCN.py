@@ -70,7 +70,7 @@ class Dnn(nn.Module):
 
 
 class DCN(nn.Module):
-    def __init__(self, feature_columns, hidden_units, layer_num, dnn_dropout=0.):
+    def __init__(self, feature_columns, hidden_units, layer_num, dropout=0.):
         super(DCN, self).__init__()
         self.dense_feature_cols, self.sparse_feature_cols = feature_columns
 

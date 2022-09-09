@@ -26,7 +26,7 @@ class Dnn(nn.Module):
 
 
 class WideDeepAttention(nn.Module):
-    def __init__(self, feature_columns, hidden_units, embedding_dim=40, dnn_dropout=0.):
+    def __init__(self, feature_columns, hidden_units, embedding_dim=40, dropout=0.):
         super(WideDeepAttention, self).__init__()
         self.dense_feature_cols, self.sparse_feature_cols = feature_columns
         # embedding
@@ -37,7 +37,7 @@ class WideDeepAttention(nn.Module):
         self.dense_embed_layers = nn.Embedding(num_embeddings=10000000, embedding_dim=embedding_dim)
         hidden_units.insert(0, (len(self.dense_feature_cols) + len(self.sparse_feature_cols)) *
                             self.sparse_feature_cols[0]['embed_dim'])
-        self.dnn_network = Dnn(hidden_units, dropout=dnn_dropout)
+        self.dnn_network = Dnn(hidden_units, dropout=dropout)
         self.multiheadAttention = nn.MultiheadAttention(embed_dim=embedding_dim, num_heads=1)
         self.linear = nn.Linear(in_features=len(self.dense_feature_cols), out_features=1)
 

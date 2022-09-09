@@ -10,7 +10,9 @@ from sklearn import metrics
 from torch.utils.data import DataLoader, TensorDataset
 from ML_Pytorch.models.AFM import AFM
 from ML_Pytorch.models.DCN import DCN
+from ML_Pytorch.models.DeepCrossing import DeepCrossing
 from ML_Pytorch.models.DeepFM import DeepFM
+from ML_Pytorch.models.FM import FM
 from ML_Pytorch.models.NFM import NFM
 from ML_Pytorch.models.PNN import PNN
 from ML_Pytorch.models.WideDeep2 import WideDeep as WideDeep2
@@ -27,19 +29,19 @@ warnings.filterwarnings('ignore')
 
 class ML_General():
 
-    def __init__(self, hidden_units=[256, 128], dnn_dropout=0., embedding_dim=40, epochs=50, batch_size=64,
+    def __init__(self, hidden_units=[256, 128], dropout=0., embedding_dim=40, epochs=50, batch_size=64,
                  dataset_path=None, model_name='WideDeep'):
         val_logger.info(
-            "hidden_units:{}, dnn_dropout:{}, embedding_dim:{}, epochs:{}, batch_size:{}, model_name:{} ".format(
+            "hidden_units:{}, dropout:{}, embedding_dim:{}, epochs:{}, batch_size:{}, model_name:{} ".format(
                 hidden_units,
-                dnn_dropout,
+                dropout,
                 embedding_dim, epochs,
                 batch_size,
                 model_name))
 
         self.batch_size = batch_size
         self.hidden_units = hidden_units
-        self.dnn_dropout = dnn_dropout
+        self.dropout = dropout
         self.epochs = epochs
         self.dataset_path = dataset_path
         self.embedding_dim = embedding_dim
@@ -77,22 +79,29 @@ class ML_General():
     def model(self, model_name):
 
         if model_name == 'WideDeep':
-            return WideDeep(feature_columns=self.fea_col, hidden_units=self.hidden_units, dnn_dropout=self.dnn_dropout)
+            return WideDeep(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
         if model_name == 'WideDeep2':
-            return WideDeep2(feature_columns=self.fea_col, hidden_units=self.hidden_units, dnn_dropout=self.dnn_dropout)
+            return WideDeep2(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
         if model_name == 'WideDeepAttention':
             return WideDeepAttention(feature_columns=self.fea_col, hidden_units=self.hidden_units,
                                      embedding_dim=self.embedding_dim,
-                                     dnn_dropout=self.dnn_dropout)
+                                     dropout=self.dropout)
         if model_name == 'NFM':
-            return NFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dnn_dropout=self.dnn_dropout)
+            return NFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
         if model_name == 'DCN':
-            return DCN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dnn_dropout=self.dnn_dropout,
+            return DCN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout,
                        layer_num=3)
         if model_name == 'PNN':
-            return PNN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dnn_dropout=self.dnn_dropout)
+            return PNN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
         if model_name == 'DeepFM':
-            return DeepFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dnn_dropout=self.dnn_dropout)
+            return DeepFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        if model_name == 'DeepCrossing':
+            return DeepCrossing(feature_columns=self.fea_col, hidden_units=self.hidden_units,
+                                dropout=self.dropout, embedding_dim=self.embedding_dim)
+        if model_name == 'FM':
+            return FM(feature_columns=self.fea_col)
+        if model_name == 'AFM':
+            return AFM(feature_columns=self.fea_col, mode="avg", hidden_units=self.hidden_units, dropout=self.dropout)
 
     def train(self):
 
@@ -178,10 +187,11 @@ class ML_General():
 
 if __name__ == '__main__':
 
-    models = ['WideDeep', 'DeepFM', 'NFM', 'DCN']
+    # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeep2', 'WideDeepAttention']
+    models = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeep2', 'WideDeepAttention']
     for model in models:
-        ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=64, dnn_dropout=0.9, embedding_dim=10,
-                        epochs=40, model_name=model)
+        ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=64, dropout=0.9, embedding_dim=10,
+                        epochs=1, model_name=model)
         ml.train()
     # ml.save()
 

@@ -58,10 +58,10 @@ def concat_embedding_list(feature_columns, input_layer_dict, embedding_layer_dic
     return embedding_list
 
 
-def get_dnn_output(dnn_input, hidden_units=[1024, 512, 256], dnn_dropout=0.3, activation='relu'):
+def get_dnn_output(dnn_input, hidden_units=[1024, 512, 256], dropout=0.3, activation='relu'):
     # 建立dnn_network
     dnn_network = [keras.layers.Dense(units=unit, activation=activation) for unit in hidden_units]
-    dropout = keras.layers.Dropout(dnn_dropout)
+    dropout = keras.layers.Dropout(dropout)
 
     # 前向传播
     x = dnn_input

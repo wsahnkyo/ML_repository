@@ -41,7 +41,7 @@ class Dnn(nn.Module):
         return x
 
 class WideDeep(nn.Module):
-    def __init__(self, feature_columns, hidden_units, dnn_dropout=0.):
+    def __init__(self, feature_columns, hidden_units, dropout=0.):
         super(WideDeep, self).__init__()
         self.dense_feature_cols, self.sparse_feature_cols = feature_columns
 
@@ -54,7 +54,7 @@ class WideDeep(nn.Module):
         hidden_units.insert(0,
                             len(self.dense_feature_cols) + len(self.sparse_feature_cols) * self.sparse_feature_cols[0][
                                 'embed_dim'])
-        self.dnn_network = Dnn(hidden_units,dnn_dropout)
+        self.dnn_network = Dnn(hidden_units,dropout)
         self.linear = Linear(len(self.dense_feature_cols))
         self.final_linear = nn.Linear(hidden_units[-1], 1)
 

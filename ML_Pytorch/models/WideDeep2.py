@@ -51,7 +51,7 @@ class Dnn(nn.Module):
 
 
 class WideDeep(nn.Module):
-    def __init__(self, feature_columns, hidden_units, dnn_dropout=0.):
+    def __init__(self, feature_columns, hidden_units, dropout=0.):
         super(WideDeep, self).__init__()
         self.dense_feature_cols, self.sparse_feature_cols = feature_columns
         

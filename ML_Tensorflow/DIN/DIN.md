@@ -260,7 +260,7 @@ class DIN(Model):
         
         # 全连接网络
         self.ffn = [Dense(unit, activation=PReLU() if ffn_activation=='prelu' else Dice()) for unit in ffn_hidden_units]
-        self.dropout = Dropout(dnn_dropout)
+        self.dropout = Dropout(dropout)
         self.dense_final = Dense(1)
         
     def call(self, inputs):

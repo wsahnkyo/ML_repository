@@ -123,7 +123,7 @@ class DIN(keras.Model):
         self.ffn = [keras.layers.Dense(unit,
                                        activation=keras.layers.PReLU() if ffn_activation == 'prelu' else Dice())
                     for unit in ffn_hidden_units]
-        self.dropout = keras.layers.Dropout(dnn_dropout)
+        self.dropout = keras.layers.Dropout(dropout)
         self.dense_final = keras.layers.Dense(1)
 
     def call(self, inputs):

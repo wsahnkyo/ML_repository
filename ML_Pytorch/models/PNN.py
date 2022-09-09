@@ -110,7 +110,7 @@ class ProductLayer(nn.Module):
 # 这里的逻辑是底层输入（类别型特征) -> embedding层 -> product 层 -> DNN -> 输出
 class PNN(nn.Module):
     
-    def __init__(self, feature_columns, hidden_units, mode='in', dnn_dropout=0., embed_dim=10, outdim=1):
+    def __init__(self, feature_columns, hidden_units, mode='in', dropout=0., embed_dim=10, outdim=1):
         """
         DeepCrossing：
             feature_info: 特征信息（数值特征， 类别特征， 类别特征embedding映射)
@@ -143,7 +143,7 @@ class PNN(nn.Module):
         
         # dnn 层
         hidden_units[0] += self.dense_num
-        self.dnn_network = DNN(hidden_units, dnn_dropout)
+        self.dnn_network = DNN(hidden_units, dropout)
         self.dense_final = nn.Linear(hidden_units[-1], 1)
     
     def forward(self, x):

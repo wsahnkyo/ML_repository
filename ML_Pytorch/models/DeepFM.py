@@ -87,7 +87,7 @@ class Dnn(nn.Module):
 
 
 class DeepFM(nn.Module):
-    def __init__(self, feature_columns, hidden_units, dnn_dropout=0.):
+    def __init__(self, feature_columns, hidden_units, dropout=0.):
         """
         DeepFM:
         :param feature_columns: 特征信息， 这个传入的是fea_cols
@@ -107,7 +107,7 @@ class DeepFM(nn.Module):
         hidden_units.insert(0, self.fea_num)
         
         self.fm = FM(self.sparse_feature_cols[0]['embed_dim'], self.fea_num)     
-        self.dnn_network = Dnn(hidden_units, dnn_dropout)
+        self.dnn_network = Dnn(hidden_units, dropout)
         self.nn_final_linear = nn.Linear(hidden_units[-1], 1)
     
     def forward(self, x):
