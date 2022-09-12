@@ -8,16 +8,17 @@ import warnings
 from sklearn.metrics import roc_auc_score
 from sklearn import metrics
 from torch.utils.data import DataLoader, TensorDataset
-from ML_Pytorch.models.AFM import AFM
-from ML_Pytorch.models.DCN import DCN
-from ML_Pytorch.models.DeepCrossing import DeepCrossing
-from ML_Pytorch.models.DeepFM import DeepFM
-from ML_Pytorch.models.FM import FM
-from ML_Pytorch.models.NFM import NFM
-from ML_Pytorch.models.PNN import PNN
-from ML_Pytorch.models.WideDeep2 import WideDeep as WideDeep2
-from ML_Pytorch.models.WideDeep import WideDeep
-from ML_Pytorch.models.WideDeepAttention import WideDeepAttention
+from models.AFM import AFM
+# from ML_Pytorch.models.AFM import AFM
+# from ML_Pytorch.models.DCN import DCN
+# from ML_Pytorch.models.DeepCrossing import DeepCrossing
+# from ML_Pytorch.models.DeepFM import DeepFM
+# from ML_Pytorch.models.FM import FM
+# from ML_Pytorch.models.NFM import NFM
+# from ML_Pytorch.models.PNN import PNN
+# from ML_Pytorch.models.WideDeep2 import WideDeep as WideDeep2
+# from ML_Pytorch.models.WideDeep import WideDeep
+# from ML_Pytorch.models.WideDeepAttention import WideDeepAttention
 import logging.config
 
 logging.config.fileConfig('../logging.conf')
@@ -70,36 +71,37 @@ class ML_General():
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.001, weight_decay=0.001)
         self.test_x = torch.tensor(test_x).float()
         self.test_y = torch.tensor(test_y).float()
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def auc(self, y_pred, y_true):
         pred = y_pred.data
         y = y_true.data
-        return roc_auc_score(y, pred)
+        return roc_auc_score(y.cpu(), pred.cpu())
 
     def model(self, model_name):
 
-        if model_name == 'WideDeep':
-            return WideDeep(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        if model_name == 'WideDeep2':
-            return WideDeep2(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        if model_name == 'WideDeepAttention':
-            return WideDeepAttention(feature_columns=self.fea_col, hidden_units=self.hidden_units,
-                                     embedding_dim=self.embedding_dim,
-                                     dropout=self.dropout)
-        if model_name == 'NFM':
-            return NFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        if model_name == 'DCN':
-            return DCN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout,
-                       layer_num=3)
-        if model_name == 'PNN':
-            return PNN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        if model_name == 'DeepFM':
-            return DeepFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        if model_name == 'DeepCrossing':
-            return DeepCrossing(feature_columns=self.fea_col, hidden_units=self.hidden_units,
-                                dropout=self.dropout, embedding_dim=self.embedding_dim)
-        if model_name == 'FM':
-            return FM(feature_columns=self.fea_col)
+        # if model_name == 'WideDeep':
+        #     return models.WideDeep.WideDeep(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        # if model_name == 'WideDeep2':
+        #     return models.WideDeep2.WideDeep(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        # if model_name == 'WideDeepAttention':
+        #     return models.WideDeepAttention.WideDeepAttention(feature_columns=self.fea_col, hidden_units=self.hidden_units,
+        #                              embedding_dim=self.embedding_dim,
+        #                              dropout=self.dropout)
+        # if model_name == 'NFM':
+        #     return models.NFM.NFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        # if model_name == 'DCN':
+        #     return models.DCN.DCN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout,
+        #                layer_num=3)
+        # if model_name == 'PNN':
+        #     return models.PNN.PNN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        # if model_name == 'DeepFM':
+        #     return models.DeepFM.DeepFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        # if model_name == 'DeepCrossing':
+        #     return models.DeepCrossing.DeepCrossing(feature_columns=self.fea_col, hidden_units=self.hidden_units,
+        #                         dropout=self.dropout, embedding_dim=self.embedding_dim)
+        # if model_name == 'FM':
+        #     return models.FM.FM(feature_columns=self.fea_col)
         if model_name == 'AFM':
             return AFM(feature_columns=self.fea_col, mode="avg", hidden_units=self.hidden_units, dropout=self.dropout)
 
@@ -108,7 +110,8 @@ class ML_General():
         # 模型的相关设置
         logger.info('Model {} is start_training.........'.format(self.model.__class__.__name__))
         val_logger.info('Model  is {}'.format(self.model.__class__.__name__))
-
+        val_logger.info('device  is {}'.format(self.device))
+        self.model.to(self.device)
         for epoch in range(1, self.epochs + 1):
             logger.info('========' * 8 + '%s' % datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             # 训练阶段
@@ -118,15 +121,18 @@ class ML_General():
             acc_sum = 0.0
             step = 1
             for step, (features, labels) in enumerate(self.dl_train, 1):
+                features=features.to(self.device)
+                labels=labels.to(self.device)
                 # 梯度清零
                 self.optimizer.zero_grad()
                 # 正向传播
                 predictions = self.model(features);
+                self.loss_func.to(self.device)
                 loss = self.loss_func(predictions, labels)
                 try:
                     metric = self.auc(predictions, labels)
                     y_pred = torch.where(predictions > 0.5, torch.ones_like(predictions), torch.zeros_like(predictions))
-                    acc = metrics.accuracy_score(labels.data, y_pred.data)
+                    acc = metrics.accuracy_score(labels.cpu().data, y_pred.cpu().data)
                 except ValueError as err:
                     logger.error(err)
                     pass
@@ -188,10 +194,11 @@ class ML_General():
 if __name__ == '__main__':
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeep2', 'WideDeepAttention']
-    models = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeep2', 'WideDeepAttention']
-    for model in models:
+    # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeep2', 'WideDeepAttention']
+    ms = ['AFM']
+    for model in ms:
         ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=64, dropout=0.9, embedding_dim=10,
-                        epochs=1, model_name=model)
+                        epochs=40, model_name=model)
         ml.train()
     # ml.save()
 
