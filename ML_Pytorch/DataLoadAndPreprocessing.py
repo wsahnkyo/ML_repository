@@ -131,6 +131,6 @@ def create_cretio_data(embed_dim=10, test_size=0.2, val_size=0.2, path="./data",
         print(e)
 
 
-create_cretio_data()
+create_cretio_data(path="./data", data_size=1)
 # fea_col = np.load('preprocessed_data/' + 'fea_col.npy', allow_pickle=True)
 # print(fea_col)

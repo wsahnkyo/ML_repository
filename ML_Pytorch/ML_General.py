@@ -9,6 +9,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn import metrics
 from torch.utils.data import DataLoader, TensorDataset
 from models.AFM import AFM
+from models.DCN import DCN
 # from ML_Pytorch.models.AFM import AFM
 # from ML_Pytorch.models.DCN import DCN
 # from ML_Pytorch.models.DeepCrossing import DeepCrossing
@@ -90,9 +91,9 @@ class ML_General():
         #                              dropout=self.dropout)
         # if model_name == 'NFM':
         #     return models.NFM.NFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        # if model_name == 'DCN':
-        #     return models.DCN.DCN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout,
-        #                layer_num=3)
+        if model_name == 'DCN':
+            return DCN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout,
+                       layer_num=3)
         # if model_name == 'PNN':
         #     return models.PNN.PNN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
         # if model_name == 'DeepFM':
@@ -144,7 +145,7 @@ class ML_General():
                 loss_sum += loss.item()
                 metric_sum += metric.item()
                 acc_sum += acc.item()
-            if (epoch % 10 == 0):
+            if (epoch % 1 == 0):
                 self.validation()
                 val_logger.info(
                     "epoch:{}, loss:{}, auc:{}, acc:{}".format(epoch, (loss_sum / step), (metric_sum / step),
@@ -154,6 +155,7 @@ class ML_General():
         logger.info('Finished Training')
 
     def validation(self):
+        self.model.to(self.device)
         self.model.eval()
         val_loss_sum = 0.0
         val_metric_sum = 0.0
@@ -161,6 +163,8 @@ class ML_General():
         val_step = 1
 
         for val_step, (features, labels) in enumerate(self.dl_val, 1):
+            features = features.to(self.device)
+            labels = labels.to(self.device)
             with torch.no_grad():
                 predictions = self.model(features)
                 val_loss = self.loss_func(predictions, labels)
@@ -168,7 +172,7 @@ class ML_General():
                     val_metric = self.auc(predictions, labels)
                     y_pred = torch.where(predictions > 0.5, torch.ones_like(predictions),
                                          torch.zeros_like(predictions))
-                    val_acc = metrics.accuracy_score(labels.data, y_pred.data)
+                    val_acc = metrics.accuracy_score(labels.cpu().data, y_pred.cpu().data)
                 except ValueError:
                     pass
 
@@ -195,7 +199,7 @@ if __name__ == '__main__':
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeep2', 'WideDeepAttention']
     # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeep2', 'WideDeepAttention']
-    ms = ['AFM']
+    ms = ['DCN']
     for model in ms:
         ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=64, dropout=0.9, embedding_dim=10,
                         epochs=40, model_name=model)
