@@ -1,26 +1,25 @@
+# 引入工具
 import numpy as np
 import pandas as pd
-import datetime
-import torch.torch_version
+import torch
 import torch.nn as nn
-import warnings
-
-from sklearn.metrics import roc_auc_score
-from sklearn import metrics
 from torch.utils.data import DataLoader, TensorDataset
+from sklearn import metrics
+
+# 引入现有模型
 from models.AFM import AFM
 from models.DCN import DCN
-# from ML_Pytorch.models.AFM import AFM
-# from ML_Pytorch.models.DCN import DCN
-# from ML_Pytorch.models.DeepCrossing import DeepCrossing
-# from ML_Pytorch.models.DeepFM import DeepFM
-# from ML_Pytorch.models.FM import FM
-# from ML_Pytorch.models.NFM import NFM
-# from ML_Pytorch.models.PNN import PNN
-# from ML_Pytorch.models.WideDeep2 import WideDeep as WideDeep2
-# from ML_Pytorch.models.WideDeep import WideDeep
-# from ML_Pytorch.models.WideDeepAttention import WideDeepAttention
+from models.FM import FM
+from models.DeepCrossing import DeepCrossing
+from models.WideDeep import WideDeep
+from models.DeepFM import DeepFM
+from models.WideDeepAttention import WideDeepAttention
+from models.NFM import NFM
+from models.PNN import PNN
+
+import warnings
 import logging.config
+import datetime
 
 logging.config.fileConfig('../logging.conf')
 logger = logging.getLogger('train')
@@ -47,67 +46,66 @@ class ML_General():
         self.epochs = epochs
         self.dataset_path = dataset_path
         self.embedding_dim = embedding_dim
-        # 读入训练集，验证集和测试集
-        train = pd.read_csv(dataset_path + "/train.csv")
-        val = pd.read_csv(dataset_path + "/val.csv")
-        test = pd.read_csv(dataset_path + "/test.csv")
-        logger.info("train count {}".format(train['Column1'].count()))
-        logger.info("val count {}".format(val['Column1'].count()))
-        logger.info("test count {}".format(test['Column1'].count()))
-        val_logger.info("train count {}".format(train['Column1'].count()))
-        val_logger.info("val count {}".format(val['Column1'].count()))
-        trn_x, trn_y = train.drop(columns='Column1').values, train['Column1'].values
-        val_x, val_y = val.drop(columns='Column1').values, val['Column1'].values
-        test_x, test_y = test.drop(columns='Column1').values, test['Column1'].values
-        fea_col = np.load(dataset_path + '/fea_col.npy', allow_pickle=True)
-        dl_train_dataset = TensorDataset(torch.tensor(trn_x).float(), torch.tensor(trn_y).float())
-        dl_val_dataset = TensorDataset(torch.tensor(val_x).float(), torch.tensor(val_y).float())
-        dl_train = DataLoader(dl_train_dataset, shuffle=True, batch_size=self.batch_size)
-        dl_val = DataLoader(dl_val_dataset, shuffle=True, batch_size=self.batch_size)
-        self.dl_train = dl_train
-        self.dl_val = dl_val
-        self.fea_col = fea_col
+        self.fea_col, self.dl_train, self.dl_val = self.data()
         self.model = self.model(model_name)
         self.loss_func = nn.BCELoss()
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.001, weight_decay=0.001)
-        self.test_x = torch.tensor(test_x).float()
-        self.test_y = torch.tensor(test_y).float()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def data(self):
+        # 读入训练集，验证集和测试集
+        train = pd.read_csv(self.dataset_path + "/train.csv")
+        val = pd.read_csv(self.dataset_path + "/val.csv")
+        fea_col = np.load(self.dataset_path + '/fea_col.npy', allow_pickle=True)
+
+        val_logger.info("train count {}".format(train['Column1'].count()))
+        val_logger.info("val count {}".format(val['Column1'].count()))
+
+        logger.info("train count {}".format(train['Column1'].count()))
+        logger.info("val count {}".format(val['Column1'].count()))
+
+        trn_x, trn_y = train.drop(columns='Column1').values, train['Column1'].values
+        val_x, val_y = val.drop(columns='Column1').values, val['Column1'].values
+
+        dl_train_dataset = TensorDataset(torch.tensor(trn_x).float(), torch.tensor(trn_y).float())
+        dl_val_dataset = TensorDataset(torch.tensor(val_x).float(), torch.tensor(val_y).float())
+
+        dl_train = DataLoader(dl_train_dataset, shuffle=True, batch_size=self.batch_size)
+        dl_val = DataLoader(dl_val_dataset, shuffle=True, batch_size=self.batch_size)
+
+        return fea_col, dl_train, dl_val
 
     def auc(self, y_pred, y_true):
         pred = y_pred.data
         y = y_true.data
-        return roc_auc_score(y.cpu(), pred.cpu())
+        return metrics.roc_auc_score(y.cpu(), pred.cpu())
 
     def model(self, model_name):
 
-        # if model_name == 'WideDeep':
-        #     return models.WideDeep.WideDeep(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        # if model_name == 'WideDeep2':
-        #     return models.WideDeep2.WideDeep(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        # if model_name == 'WideDeepAttention':
-        #     return models.WideDeepAttention.WideDeepAttention(feature_columns=self.fea_col, hidden_units=self.hidden_units,
-        #                              embedding_dim=self.embedding_dim,
-        #                              dropout=self.dropout)
-        # if model_name == 'NFM':
-        #     return models.NFM.NFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        if model_name == 'WideDeep':
+            return WideDeep(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        if model_name == 'WideDeepAttention':
+            return WideDeepAttention(feature_columns=self.fea_col, hidden_units=self.hidden_units,
+                                     embedding_dim=self.embedding_dim,
+                                     dropout=self.dropout)
+        if model_name == 'NFM':
+            return NFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
         if model_name == 'DCN':
             return DCN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout,
                        layer_num=3)
-        # if model_name == 'PNN':
-        #     return models.PNN.PNN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        # if model_name == 'DeepFM':
-        #     return models.DeepFM.DeepFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
-        # if model_name == 'DeepCrossing':
-        #     return models.DeepCrossing.DeepCrossing(feature_columns=self.fea_col, hidden_units=self.hidden_units,
-        #                         dropout=self.dropout, embedding_dim=self.embedding_dim)
-        # if model_name == 'FM':
-        #     return models.FM.FM(feature_columns=self.fea_col)
+        if model_name == 'PNN':
+            return PNN(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        if model_name == 'DeepFM':
+            return DeepFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout)
+        if model_name == 'DeepCrossing':
+            return DeepCrossing(feature_columns=self.fea_col, hidden_units=self.hidden_units,
+                                dropout=self.dropout, embedding_dim=self.embedding_dim)
+        if model_name == 'FM':
+            return FM(feature_columns=self.fea_col)
         if model_name == 'AFM':
             return AFM(feature_columns=self.fea_col, mode="avg", hidden_units=self.hidden_units, dropout=self.dropout)
 
     def train(self):
-
         # 模型的相关设置
         logger.info('Model {} is start_training.........'.format(self.model.__class__.__name__))
         val_logger.info('Model  is {}'.format(self.model.__class__.__name__))
@@ -122,8 +120,8 @@ class ML_General():
             acc_sum = 0.0
             step = 1
             for step, (features, labels) in enumerate(self.dl_train, 1):
-                features=features.to(self.device)
-                labels=labels.to(self.device)
+                features = features.to(self.device)
+                labels = labels.to(self.device)
                 # 梯度清零
                 self.optimizer.zero_grad()
                 # 正向传播
@@ -145,7 +143,7 @@ class ML_General():
                 loss_sum += loss.item()
                 metric_sum += metric.item()
                 acc_sum += acc.item()
-            if (epoch % 1 == 0):
+            if (epoch % 10 == 0):
                 self.validation()
                 val_logger.info(
                     "epoch:{}, loss:{}, auc:{}, acc:{}".format(epoch, (loss_sum / step), (metric_sum / step),
@@ -184,11 +182,16 @@ class ML_General():
                                                                      val_acc_sum / val_step))
 
     def test(self):
-        y_pred_probs = self.model(self.test_x)
+        test = pd.read_csv(self.dataset_path + "/test.csv")
+        test_x, test_y = test.drop(columns='Column1').values, test['Column1'].values
+        test_x = torch.tensor(test_x).float()
+        test_y = torch.tensor(test_y).float()
+        y_pred_probs = self.model(test_x)
         y_pred = torch.where(y_pred_probs > 0.5, torch.ones_like(y_pred_probs), torch.zeros_like(y_pred_probs))
+        logger.info("test count {}".format(test['Column1'].count()))
         val_logger.info("test loss:{}, test auc:{}, test acc:{}".format(self.loss_func(y_pred_probs, y_pred),
-                                                                        self.auc(y_pred, self.test_y),
-                                                                        metrics.accuracy_score(self.test_y.data,
+                                                                        self.auc(y_pred, test_y),
+                                                                        metrics.accuracy_score(test_y.data,
                                                                                                y_pred.data)))
 
     def save(self):
@@ -197,13 +200,18 @@ class ML_General():
 
 if __name__ == '__main__':
 
-    # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeep2', 'WideDeepAttention']
-    # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeep2', 'WideDeepAttention']
+    # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeepAttention']
+    # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeepAttention']
+    batch_size_list = [64, 128, 256]
+    drop_list = [0.1, 0.5, 0.9]
     ms = ['DCN']
     for model in ms:
-        ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=64, dropout=0.9, embedding_dim=10,
-                        epochs=40, model_name=model)
-        ml.train()
+        for batch_size in batch_size_list:
+            for drop in drop_list:
+                ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=batch_size, dropout=drop,
+                                embedding_dim=100,
+                                epochs=30, model_name=model)
+                ml.train()
     # ml.save()
 
     # ml.model.load_state_dict(torch.load("D:/DataSet/model_parameter.pkl"))
