@@ -202,6 +202,12 @@ if __name__ == '__main__':
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeepAttention']
     # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeepAttention']
+    # batch_size_list = [64, 128, 256]
+    # drop_list = [0.1, 0.5, 0.9]
+    # ms = ['DCN']
+    # for model in ms:
+    #     for batch_size in batch_size_list:
+    #         for drop in drop_list:
     batch_size_list = [64, 128, 256]
     drop_list = [0.1, 0.5, 0.9]
     ms = ['DCN']
