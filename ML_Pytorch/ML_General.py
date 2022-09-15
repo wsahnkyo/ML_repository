@@ -49,8 +49,9 @@ class ML_General():
         self.fea_col, self.dl_train, self.dl_val = self.data()
         self.model = self.model(model_name)
         self.loss_func = nn.BCELoss()
-        self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.001, weight_decay=0.001)
+        self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.05)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[5,10,15,20], gamma=0.5)
 
     def data(self):
         # 读入训练集，验证集和测试集
@@ -143,13 +144,15 @@ class ML_General():
                 loss_sum += loss.item()
                 metric_sum += metric.item()
                 acc_sum += acc.item()
+            self.scheduler.step()
             if (epoch % 10 == 0):
                 self.validation()
                 val_logger.info(
-                    "epoch:{}, loss:{}, auc:{}, acc:{}".format(epoch, (loss_sum / step), (metric_sum / step),
+                    "model :{},epoch:{}, loss:{}, auc:{}, acc:{}".format(self.model.__class__.__name__,epoch, (loss_sum / step), (metric_sum / step),
                                                                (acc_sum / step)))
-            logger.info("epoch:{}, loss:{}, auc:{}, acc:{}".format(epoch, (loss_sum / step), (metric_sum / step),
+            logger.info("model :{},epoch:{}, loss:{}, auc:{}, acc:{}".format(self.model.__class__.__name__,epoch, (loss_sum / step), (metric_sum / step),
                                                                    (acc_sum / step)))
+
         logger.info('Finished Training')
 
     def validation(self):
@@ -199,6 +202,10 @@ class ML_General():
 
 
 if __name__ == '__main__':
+    ml = ML_General(hidden_units=[512,512,256],dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.5,
+                    embedding_dim=16,
+                    epochs=30, model_name='WideDeep')
+    ml.train()
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeepAttention']
     # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeepAttention']
@@ -208,16 +215,16 @@ if __name__ == '__main__':
     # for model in ms:
     #     for batch_size in batch_size_list:
     #         for drop in drop_list:
-    batch_size_list = [64, 128, 256]
-    drop_list = [0.1, 0.5, 0.9]
-    ms = ['DCN']
-    for model in ms:
-        for batch_size in batch_size_list:
-            for drop in drop_list:
-                ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=batch_size, dropout=drop,
-                                embedding_dim=100,
-                                epochs=30, model_name=model)
-                ml.train()
+
+    # ms = ['WideDeep']
+    # for model in ms:
+    #     for batch_size in batch_size_list:
+    #         for drop in drop_list:
+    #             ml = ML_General(dataset_path="./data/preprocessed_data", batch_size=batch_size, dropout=drop,
+    #                             embedding_dim=100,
+    #                             epochs=30, model_name=model)
+    #             ml.train()
+
     # ml.save()
 
     # ml.model.load_state_dict(torch.load("D:/DataSet/model_parameter.pkl"))
