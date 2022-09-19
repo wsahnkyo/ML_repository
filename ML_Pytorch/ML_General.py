@@ -17,6 +17,7 @@ from models.WideDeepAttention import WideDeepAttention
 from models.NFM import NFM
 from models.PNN import PNN
 from models.Assembly1 import Assembly1
+from models.Assembly2 import Assembly2
 
 import warnings
 import logging.config
@@ -32,7 +33,7 @@ warnings.filterwarnings('ignore')
 class ML_General():
 
     def __init__(self, hidden_units=[256, 128], dropout=0., embedding_dim=40, epochs=50, batch_size=64,
-                 dataset_path=None, model_name='WideDeep'):
+                 dataset_path=None, model_name='WideDeep', valriot=10):
         val_logger.info(
             "hidden_units:{}, dropout:{}, embedding_dim:{}, epochs:{}, batch_size:{}, model_name:{} ".format(
                 hidden_units,
@@ -52,6 +53,7 @@ class ML_General():
         self.loss_func = nn.BCELoss()
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.002, weight_decay=0.001)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.valriot = valriot
         # self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[5, 10, 15, 20], gamma=0.5)
 
     def data(self):
@@ -108,6 +110,9 @@ class ML_General():
             return AFM(feature_columns=self.fea_col, mode="avg", hidden_units=self.hidden_units, dropout=self.dropout)
         if model_name == 'Assembly1':
             return Assembly1(feature_columns=self.fea_col, hidden_units=self.hidden_units, layer_num=2)
+        if model_name == 'Assembly2':
+            return Assembly2(feature_columns=self.fea_col, hidden_units=self.hidden_units, layer_num=2,
+                             dropout=self.dropout)
 
     def train(self):
         # 模型的相关设置
@@ -148,7 +153,7 @@ class ML_General():
                 metric_sum += metric.item()
                 acc_sum += acc.item()
             # self.scheduler.step()
-            if (epoch % 1 == 0):
+            if (epoch % self.valriot == 0):
                 self.validation()
                 val_logger.info(
                     "model :{},epoch:{}, loss:{}, auc:{}, acc:{}".format(self.model.__class__.__name__, epoch,
@@ -209,9 +214,9 @@ class ML_General():
 
 
 if __name__ == '__main__':
-    ml = ML_General(hidden_units=[512, 512, 256], dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.5,
+    ml = ML_General(hidden_units=[512, 512, 256], dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.9,
                     embedding_dim=16,
-                    epochs=30, model_name='Assembly1')
+                    epochs=30, model_name='Assembly2', valriot=5)
     ml.train()
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeepAttention']
