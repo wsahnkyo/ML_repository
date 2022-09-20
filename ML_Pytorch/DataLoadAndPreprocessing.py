@@ -27,6 +27,10 @@ def denseFeature(feat):
 def create_cretio_data(embed_dim=10, test_size=0.2, val_size=0.2, path="./data", to_path="./data", data_size=0.06):
     try:
         # import data
+
+        data_df = pd.read_csv("../input/criteo-small/train_1m.txt", sep="\t", header=None)
+        data_df.columns = ["label"] + ["I" + str(x) for x in range(1, 14)] + [
+            "C" + str(x) for x in range(14, 40)]
         data_df = pd.read_csv(path + '/data.csv')
         true_data = data_df[(data_df['Column1'] == 1)]
         false_data = data_df[(data_df['Column1'] == 0)]
@@ -80,7 +84,47 @@ def create_cretio_data(embed_dim=10, test_size=0.2, val_size=0.2, path="./data",
     except Exception as e:
         print(e)
 
+def create_cretio_data_by_txt(embed_dim=10, test_size=0.2, val_size=0.2, path="./data",  to_path="./data", data_size=0.06):
+    # import data
 
-create_cretio_data(path="/data/", data_size=1,embed_dim=16)
+    data_df = pd.read_csv("E:\\Downloads\\dac\\train.txt", sep="\t", header=None)
+    data_df.columns = ["label"] + ["I" + str(x) for x in range(1, 14)] + [
+        "C" + str(x) for x in range(14, 40)]
+    print(data_df.count())
+
+    # sparse_feas = []
+    # dense_feas = []
+    # # 特征分开类别
+    # for index, col in enumerate(data_df):
+    #     if 1 <= index <= 13:
+    #         dense_feas.append(col)
+    #     if 14 <= index <= 39:
+    #         sparse_feas.append(col)
+
+    # 填充缺失值
+    # data_df[sparse_feas] = data_df[sparse_feas].fillna('-1')
+    # data_df[dense_feas] = data_df[dense_feas].fillna(0)
+
+    # # 把特征列保存成字典, 方便类别特征的处理工作
+    # feature_columns = [[denseFeature(feat) for feat in dense_feas]] + [
+    #     [sparsFeature(feat, len(data_df[feat].unique()), embed_dim=embed_dim) for feat in sparse_feas]]
+    # np.save(to_path + '/preprocessed_data/fea_col.npy', feature_columns)
+    #
+    # # 数据预处理
+    # # 进行编码  类别特征编码
+    # for feat in sparse_feas:
+    #     le = LabelEncoder()
+    #     data_df[feat] = le.fit_transform(data_df[feat])
+    # # 数值特征归一化
+    # for feat in dense_feas:
+    #     mms = MinMaxScaler()
+    #     data_df[feat] = mms.fit_transform(data_df[feat].values.reshape(-1, 1))
+    #
+    # data_df.reset_index(drop=True, inplace=True)
+    # data_df.to_csv(to_path + '/preprocessed_data/train.csv', index=0)
+
+
+create_cretio_data_by_txt(path="/data/", data_size=1, embed_dim=16, val_size=0)
+# create_cretio_data(path="/data/", data_size=1, embed_dim=16, val_size=0)
 # fea_col = np.load('preprocessed_data/' + 'fea_col.npy', allow_pickle=True)
 # print(fea_col)
