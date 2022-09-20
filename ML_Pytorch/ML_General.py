@@ -16,6 +16,8 @@ from models.DeepFM import DeepFM
 from models.WideDeepAttention import WideDeepAttention
 from models.NFM import NFM
 from models.PNN import PNN
+from models.Assembly1 import Assembly1
+from models.Assembly2 import Assembly2
 
 import warnings
 import logging.config
@@ -31,7 +33,7 @@ warnings.filterwarnings('ignore')
 class ML_General():
 
     def __init__(self, hidden_units=[256, 128], dropout=0., embedding_dim=40, epochs=50, batch_size=64,
-                 dataset_path=None, model_name='WideDeep'):
+                 dataset_path=None, model_name='WideDeep', valriot=10):
         val_logger.info(
             "hidden_units:{}, dropout:{}, embedding_dim:{}, epochs:{}, batch_size:{}, model_name:{} ".format(
                 hidden_units,
@@ -49,9 +51,10 @@ class ML_General():
         self.fea_col, self.dl_train, self.dl_val = self.data()
         self.model = self.model(model_name)
         self.loss_func = nn.BCELoss()
-        self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.05)
+        self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=0.002, weight_decay=0.001)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[5,10,15,20], gamma=0.5)
+        self.valriot = valriot
+        # self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[5, 10, 15, 20], gamma=0.5)
 
     def data(self):
         # 读入训练集，验证集和测试集
@@ -105,6 +108,11 @@ class ML_General():
             return FM(feature_columns=self.fea_col)
         if model_name == 'AFM':
             return AFM(feature_columns=self.fea_col, mode="avg", hidden_units=self.hidden_units, dropout=self.dropout)
+        if model_name == 'Assembly1':
+            return Assembly1(feature_columns=self.fea_col, hidden_units=self.hidden_units, layer_num=2)
+        if model_name == 'Assembly2':
+            return Assembly2(feature_columns=self.fea_col, hidden_units=self.hidden_units, layer_num=2,
+                             dropout=self.dropout)
 
     def train(self):
         # 模型的相关设置
@@ -144,14 +152,16 @@ class ML_General():
                 loss_sum += loss.item()
                 metric_sum += metric.item()
                 acc_sum += acc.item()
-            self.scheduler.step()
-            if (epoch % 10 == 0):
+            # self.scheduler.step()
+            if (epoch % self.valriot == 0):
                 self.validation()
                 val_logger.info(
-                    "model :{},epoch:{}, loss:{}, auc:{}, acc:{}".format(self.model.__class__.__name__,epoch, (loss_sum / step), (metric_sum / step),
-                                                               (acc_sum / step)))
-            logger.info("model :{},epoch:{}, loss:{}, auc:{}, acc:{}".format(self.model.__class__.__name__,epoch, (loss_sum / step), (metric_sum / step),
-                                                                   (acc_sum / step)))
+                    "model :{},epoch:{}, loss:{}, auc:{}, acc:{}".format(self.model.__class__.__name__, epoch,
+                                                                         (loss_sum / step), (metric_sum / step),
+                                                                         (acc_sum / step)))
+            logger.info("model :{},epoch:{}, loss:{}, auc:{}, acc:{}".format(self.model.__class__.__name__, epoch,
+                                                                             (loss_sum / step), (metric_sum / step),
+                                                                             (acc_sum / step)))
 
         logger.info('Finished Training')
 
@@ -181,8 +191,10 @@ class ML_General():
             val_metric_sum += val_metric.item()
             val_acc_sum += val_acc.item()
 
-        val_logger.info("val loss:{}, val auc:{}, val acc:{}".format(val_loss_sum / val_step, val_metric_sum / val_step,
-                                                                     val_acc_sum / val_step))
+        val_logger.info("model :{},val loss:{}, val auc:{}, val acc:{}".format(self.model.__class__.__name__,
+                                                                               val_loss_sum / val_step,
+                                                                               val_metric_sum / val_step,
+                                                                               val_acc_sum / val_step))
 
     def test(self):
         test = pd.read_csv(self.dataset_path + "/test.csv")
@@ -202,15 +214,20 @@ class ML_General():
 
 
 if __name__ == '__main__':
-    ml = ML_General(hidden_units=[1024,512,256],dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.5,
+    ml = ML_General(hidden_units=[512, 512, 256], dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.9,
                     embedding_dim=16,
-                    epochs=30, model_name='WideDeep')
+                    epochs=30, model_name='Assembly2', valriot=5)
     ml.train()
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeepAttention']
     # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeepAttention']
     # batch_size_list = [64, 128, 256]
     # drop_list = [0.1, 0.5, 0.9]
+    # ms = ['DCN']
+    # for model in ms:
+    #     for batch_size in batch_size_list:
+    #         for drop in drop_list:
+
     # ms = ['WideDeep']
     # for model in ms:
     #     for batch_size in batch_size_list:
@@ -219,6 +236,7 @@ if __name__ == '__main__':
     #                             embedding_dim=100,
     #                             epochs=30, model_name=model)
     #             ml.train()
+
     # ml.save()
 
     # ml.model.load_state_dict(torch.load("D:/DataSet/model_parameter.pkl"))
