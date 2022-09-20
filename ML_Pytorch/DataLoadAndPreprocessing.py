@@ -82,7 +82,7 @@ def create_cretio_data(embed_dim=10, test_size=0.2, val_size=0.2, path="./data",
 
 
 
-create_cretio_data(path="D:/DataSet/", data_size=1,embed_dim=16)
+create_cretio_data(path="D:/DataSet/", data_size=0.01,embed_dim=16)
 
 # fea_col = np.load('preprocessed_data/' + 'fea_col.npy', allow_pickle=True)
 # print(fea_col)

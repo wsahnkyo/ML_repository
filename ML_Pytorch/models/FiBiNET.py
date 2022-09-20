@@ -1,7 +1,7 @@
 import torch
-from torch import nn
 from itertools import combinations
-
+import torch.nn as nn
+import torch.nn.functional as F
 
 class NumEmbedding(nn.Module):
     """
@@ -158,44 +158,30 @@ class MultiLayerPerceptron(nn.Module):
 
 # fibinet
 class FiBiNET(nn.Module):
-
-    def __init__(self,
-                 d_numerical,
-                 categories,
-                 d_embed,
-                 mlp_layers,
-                 mlp_dropout,
+    def __init__(self, feature_columns, hidden_units, dropout=0.,
                  reduction_ratio=3,
-                 bilinear_type="field_interaction",
-                 n_classes=1):
-
+                 bilinear_type="field_interaction"):
         super().__init__()
+        self.dense_feature_cols, self.sparse_feature_cols = feature_columns
+        categories = [sparse_feature_col['feat_num'] for sparse_feature_col in self.sparse_feature_cols]
+        self.num_linear = nn.Linear(len(self.dense_feature_cols), 1)
+        self.cat_linear = CatLinear(categories, 1)
 
-        if d_numerical is None:
-            d_numerical = 0
-        if categories is None:
-            categories = []
+        self.num_embedding = NumEmbedding(len(self.dense_feature_cols), 1, self.sparse_feature_cols[0]['embed_dim'])
+        self.cat_embedding = CatEmbedding(categories, self.sparse_feature_cols[0]['embed_dim'])
 
-        self.categories = categories
-        self.n_classes = n_classes
-
-        self.num_linear = nn.Linear(d_numerical, n_classes) if d_numerical else None
-        self.cat_linear = CatLinear(categories, n_classes) if categories else None
-
-        self.num_embedding = NumEmbedding(d_numerical, 1, d_embed) if d_numerical else None
-        self.cat_embedding = CatEmbedding(categories, d_embed) if categories else None
-
-        num_fields = d_numerical + len(categories)
-
-        self.se_attention = SENetAttention(num_fields, reduction_ratio)
-        self.bilinear = BilinearInteraction(num_fields, d_embed, bilinear_type)
-
-        mlp_in = num_fields * (num_fields - 1) * d_embed
+        self.se_attention = SENetAttention(len(self.sparse_feature_cols) + len(self.dense_feature_cols))
+        self.bilinear = BilinearInteraction(len(self.sparse_feature_cols) + len(self.dense_feature_cols),
+                                            self.sparse_feature_cols[0]['embed_dim'],
+                                            "field_interaction")
+        mlp_in = (len(self.sparse_feature_cols) + len(self.dense_feature_cols)) * (
+                (len(self.sparse_feature_cols) + len(self.dense_feature_cols)) - 1) * self.sparse_feature_cols[0][
+                     'embed_dim']
         self.mlp = MultiLayerPerceptron(
             d_in=mlp_in,
-            d_layers=mlp_layers,
-            dropout=mlp_dropout,
-            d_out=n_classes
+            d_layers=hidden_units,
+            dropout=dropout,
+            d_out=1
         )
 
     def forward(self, x):
@@ -203,23 +189,17 @@ class FiBiNET(nn.Module):
         x_num: numerical features
         x_cat: category features
         """
-        x_num, x_cat = x
+        dense_input, sparse_inputs = x[:, :len(self.dense_feature_cols)], x[:, len(self.dense_feature_cols):]
 
         # 一，wide部分
-        x_linear = 0.0
-        if self.num_linear:
-            x_linear = x_linear + self.num_linear(x_num)
-        if self.cat_linear:
-            x_linear = x_linear + self.cat_linear(x_cat)
+        x_linear = self.num_linear(dense_input) + self.cat_linear(sparse_inputs.long())
 
         # 二，deep部分
 
         # 1，embedding
         x_embedding = []
-        if self.num_embedding:
-            x_embedding.append(self.num_embedding(x_num[..., None]))
-        if self.cat_embedding:
-            x_embedding.append(self.cat_embedding(x_cat))
+        x_embedding.append(self.num_embedding(dense_input[..., None]))
+        x_embedding.append(self.cat_embedding(sparse_inputs.long()))
         x_embedding = torch.cat(x_embedding, dim=1)
 
         # 2，interaction
@@ -232,20 +212,7 @@ class FiBiNET(nn.Module):
         x_deep = self.mlp(x_interaction)
 
         # 三，高低融合
-        x_out = x_linear + x_deep
-        if self.n_classes == 1:
-            x_out = x_out.squeeze(-1)
-        return x_out
-
-
-##测试 FiBiNET
-
-model = FiBiNET(d_numerical=3, categories=[4, 3, 2],
-                d_embed=4, mlp_layers=[20, 20], mlp_dropout=0.25,
-                reduction_ratio=3,
-                bilinear_type="field_interaction",
-                n_classes=1)
-
-x_num = torch.randn(2, 3)
-x_cat = torch.randint(0, 2, (2, 3))
-print(model((x_num, x_cat)))
+        outputs = x_linear + x_deep
+        outputs = F.sigmoid(outputs)
+        outputs = outputs.view(outputs.shape[0], )
+        return outputs

@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
-import torchkeras
+
 from models.FiBiNET import FiBiNET
 
 
@@ -22,7 +22,7 @@ from sklearn.preprocessing import LabelEncoder, QuantileTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 
-dfdata = pd.read_csv("../input/criteo-small/train_1m.txt", sep="\t", header=None)
+dfdata = pd.read_csv("D:\\train_1m.txt\\train_1m.txt", sep="\t", header=None)
 dfdata.columns = ["label"] + ["I" + str(x) for x in range(1, 14)] + [
     "C" + str(x) for x in range(14, 40)]
 
@@ -37,6 +37,9 @@ dfdata[num_cols] = num_pipe.fit_transform(dfdata[num_cols])
 
 categories = [dfdata[col].max() + 1 for col in cat_cols]
 
+print("aaa")
+print("aaa")
+import torchkeras
 import torch
 from torch.utils.data import Dataset, DataLoader
 
