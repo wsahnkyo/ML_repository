@@ -202,7 +202,7 @@ class ML_General():
 
 
 if __name__ == '__main__':
-    ml = ML_General(hidden_units=[512,512,256],dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.5,
+    ml = ML_General(hidden_units=[1024,512,256],dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.5,
                     embedding_dim=16,
                     epochs=30, model_name='WideDeep')
     ml.train()
