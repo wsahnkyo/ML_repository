@@ -84,7 +84,9 @@ def create_cretio_data(embed_dim=10, test_size=0.2, val_size=0.2, path="./data",
     except Exception as e:
         print(e)
 
-def create_cretio_data_by_txt(embed_dim=10, test_size=0.2, val_size=0.2, path="./data",  to_path="./data", data_size=0.06):
+
+def create_cretio_data_by_txt(embed_dim=10, test_size=0.2, val_size=0.2, path="./data", to_path="./data",
+                              data_size=0.06):
     # import data
 
     data_df = pd.read_csv("E:\\Downloads\\dac\\train.txt", sep="\t", header=None)
@@ -126,5 +128,3 @@ def create_cretio_data_by_txt(embed_dim=10, test_size=0.2, val_size=0.2, path=".
 
 create_cretio_data_by_txt(path="/data/", data_size=1, embed_dim=16, val_size=0)
 # create_cretio_data(path="/data/", data_size=1, embed_dim=16, val_size=0)
-# fea_col = np.load('preprocessed_data/' + 'fea_col.npy', allow_pickle=True)
-# print(fea_col)

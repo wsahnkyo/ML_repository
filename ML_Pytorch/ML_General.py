@@ -18,6 +18,7 @@ from models.NFM import NFM
 from models.PNN import PNN
 from models.Assembly1 import Assembly1
 from models.Assembly2 import Assembly2
+from models.FiBiNET import FiBiNET
 
 import warnings
 import logging.config
@@ -113,6 +114,9 @@ class ML_General():
         if model_name == 'Assembly2':
             return Assembly2(feature_columns=self.fea_col, hidden_units=self.hidden_units, layer_num=2,
                              dropout=self.dropout)
+        if model_name == 'FiBiNET':
+            return FiBiNET(feature_columns=self.fea_col, hidden_units=self.hidden_units,
+                           dropout=self.dropout)
 
     def train(self):
         # 模型的相关设置
