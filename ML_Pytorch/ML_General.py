@@ -19,6 +19,7 @@ from models.PNN import PNN
 from models.Assembly1 import Assembly1
 from models.Assembly2 import Assembly2
 from models.FiBiNET import FiBiNET
+from models.DCN_LSTM import DCN_LSTM
 
 import warnings
 import logging.config
@@ -117,6 +118,9 @@ class ML_General():
         if model_name == 'FiBiNET':
             return FiBiNET(feature_columns=self.fea_col, hidden_units=self.hidden_units,
                            dropout=self.dropout)
+        if model_name == 'DCN_LSTM':
+            return DCN_LSTM(feature_columns=self.fea_col, hidden_units=self.hidden_units,
+                            dropout=self.dropout, layer_num=3)
 
     def train(self):
         # 模型的相关设置
@@ -220,7 +224,7 @@ class ML_General():
 if __name__ == '__main__':
     ml = ML_General(hidden_units=[512, 512, 256], dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.9,
                     embedding_dim=16,
-                    epochs=30, model_name='Assembly2', valriot=5)
+                    epochs=30, model_name='DCN_LSTM', valriot=5)
     ml.train()
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeepAttention']
