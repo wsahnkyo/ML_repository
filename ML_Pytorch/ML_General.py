@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn import metrics
+from torchviz import make_dot
 
 # 引入现有模型
 from models.AFM import AFM
@@ -223,12 +224,17 @@ class ML_General():
     def save(self):
         torch.save(self.model.state_dict(), self.dataset_path + "/model_parameter.pkl")
 
+    def save_picture(self):
+        x = torch.zeros(256, 39)
+        vis_graph = make_dot(self.model(x), params=dict(self.model.named_parameters()))
+        vis_graph.view(filename=self.model.__class__.__name__)
+
 
 if __name__ == '__main__':
     ml = ML_General(hidden_units=[512, 512, 256], dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.9,
                     embedding_dim=16,
-                    epochs=30, model_name='WideDeepTransformer', valriot=5)
-    ml.train()
+                    epochs=30, model_name='WideDeep', valriot=5)
+    ml.save_picture()
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeepAttention']
     # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeepAttention']
