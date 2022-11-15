@@ -5,7 +5,7 @@ Note=open('tags.txt',mode='w',encoding='utf-8')
 
 with open('msra_train.txt', encoding='utf-8') as file:
     content = file.readlines()
-    for line in content[0:5000]:
+    for line in content[0:500]:
         line = json.loads(line.rstrip())
         # print(line['text'])
         # print(line['entity_list'])
