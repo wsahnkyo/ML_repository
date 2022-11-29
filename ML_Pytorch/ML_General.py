@@ -22,6 +22,7 @@ from models.Assembly2 import Assembly2
 from models.FiBiNET import FiBiNET
 from models.DCN_LSTM import DCN_LSTM
 from models.WideDeepTransformer import WideDeepTransformer
+from models.xDeepFM import XDeepFM
 import warnings
 import logging.config
 import datetime
@@ -125,7 +126,9 @@ class ML_General():
         if model_name == 'WideDeepTransformer':
             return WideDeepTransformer(feature_columns=self.fea_col, hidden_units=self.hidden_units,
                                        dropout=self.dropout)
-
+        if model_name == 'XDeepFM':
+            return XDeepFM(feature_columns=self.fea_col, hidden_units=self.hidden_units, dropout=self.dropout,
+                       layer_num=2)
     def train(self):
         # 模型的相关设置
         logger.info('Model {} is start_training.........'.format(self.model.__class__.__name__))
@@ -233,8 +236,9 @@ class ML_General():
 if __name__ == '__main__':
     ml = ML_General(hidden_units=[512, 512, 256], dataset_path="./data/preprocessed_data", batch_size=256, dropout=0.9,
                     embedding_dim=16,
-                    epochs=30, model_name='WideDeep', valriot=5)
-    ml.save_picture()
+                    epochs=30, model_name='XDeepFM', valriot=5)
+    ml.train()
+    # ml.save_picture()
 
     # models = ['AFM','DCN','DeepCrossing','DeepFM','FFM','FM','NFM','PNN','WideDeep', 'WideDeepAttention']
     # ms = ['AFM', 'DCN', 'DeepCrossing', 'DeepFM', 'FM', 'NFM', 'PNN', 'WideDeep', 'WideDeepAttention']
